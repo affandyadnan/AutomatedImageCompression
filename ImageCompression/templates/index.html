@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload and Compression</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .upload-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .upload-btn:hover {
+            background-color: #45a049;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .progress {
+            width: 0;
+            height: 100%;
+            background-color: #4CAF50;
+        }
+        .file-list {
+            list-style: none;
+            padding: 0;
+        }
+        .file-list li {
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+        }
+        .download-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .download-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Upload and Compression</h1>
+        <input type="file" id="fileInput" style="display: none;">
+        <button onclick="chooseFile()" class="upload-btn"><i class="fas fa-upload"></i> Choose Image</button>
+        <div id="progressBar" class="progress-bar" style="display: none;">
+            <div class="progress"></div>
+        </div>
+        <ul id="uploadedFiles" class="file-list"></ul>
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+    </div>
+
+    <script>
+        function chooseFile() {
+            document.getElementById('fileInput').click();
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function() {
+            var file = this.files[0];
+            var formData = new FormData();
+            formData.append('file', file);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload');
+            xhr.upload.onprogress = function(e) {
+                var progress = (e.loaded / e.total) * 100;
+                document.querySelector('.progress').style.width = progress + '%';
+            };
+
+            xhr.onload = function() {
+                var response = JSON.parse(xhr.responseText);
+                if (response.error) {
+                    document.getElementById('errorMessage').innerText = response.error;
+                    document.getElementById('errorMessage').style.display = 'block';
+                } else {
+                    document.getElementById('errorMessage').style.display = 'none';
+                    var filename = response.filename;
+                    var listItem = document.createElement('li');
+                    listItem.textContent = filename;
+                    document.getElementById('uploadedFiles').appendChild(listItem);
+
+                    // Add download button
+                    var downloadBtn = document.createElement('a');
+                    downloadBtn.textContent = 'Download';
+                    downloadBtn.className = 'download-btn';
+                    downloadBtn.href = '/download/' + encodeURIComponent(filename);
+                    downloadBtn.download = filename;
+                    listItem.appendChild(downloadBtn);
+                }
+                document.getElementById('progressBar').style.display = 'none';
+            };
+
+            xhr.send(formData);
+            document.getElementById('progressBar').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
